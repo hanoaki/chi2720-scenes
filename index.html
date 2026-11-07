@@ -1,0 +1,325 @@
+<!doctype html>
+<html lang="zh-Hant-HK">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>情義糾結・抽一個處境</title>
+<style>
+  :root{
+    --ink:#1d1d1f; --sub:#6b6b70; --line:#d8d8dc; --bg:#faf9f6; --accent:#8b5e3c;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;padding:0;background:var(--bg);color:var(--ink);
+    font-family:"PingFang HK","Noto Sans TC","Microsoft JhengHei",system-ui,sans-serif}
+  .wrap{min-height:100vh;display:flex;flex-direction:column;justify-content:center;
+    padding:28px 22px 40px;max-width:620px;margin:0 auto}
+  .kicker{font-size:13px;letter-spacing:.18em;color:var(--sub);margin-bottom:10px}
+  h1{font-size:26px;line-height:1.45;margin:0 0 8px;font-weight:600;letter-spacing:.02em}
+  .lede{font-size:15px;line-height:1.8;color:var(--sub);margin:0 0 26px}
+  .scene{font-size:19px;line-height:2.0;letter-spacing:.01em;margin:0 0 18px;
+    animation:rise .42s ease both}
+  .quote{font-size:20px;line-height:1.9;padding:14px 18px;margin:0 0 20px;
+    border-left:3px solid var(--accent);background:#fff;border-radius:0 10px 10px 0;
+    animation:rise .5s .05s ease both}
+  .quote b{font-weight:600}
+  .fill{font-size:19px;line-height:2.4;margin:0 0 6px;animation:rise .5s .1s ease both}
+  .blank{display:inline-block;min-width:88px;border-bottom:1.5px solid var(--ink);
+    margin:0 4px;vertical-align:baseline}
+  .hint{font-size:14px;color:var(--sub);line-height:1.8;margin:14px 0 0}
+  .row{display:flex;gap:12px;margin-top:30px;flex-wrap:wrap}
+  button{font:inherit;font-size:16px;font-weight:600;padding:15px 22px;border-radius:12px;
+    border:1.5px solid var(--ink);background:var(--ink);color:#fff;cursor:pointer;
+    transition:transform .12s ease,opacity .12s ease;flex:1 1 auto;min-width:130px}
+  button.ghost{background:transparent;color:var(--ink);border-color:var(--line)}
+  button:active{transform:scale(.985)}
+  .meta{margin-top:34px;padding-top:18px;border-top:1px solid var(--line);
+    font-size:13.5px;line-height:1.9;color:var(--sub)}
+  .meta b{color:var(--accent);font-weight:600}
+  .hidden{display:none}
+  @keyframes rise{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+  @media (prefers-reduced-motion:reduce){*{animation:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div id="home">
+    <div class="kicker">荀巨伯遠看友人疾・自我反省</div>
+    <h1>抽一個處境：<br>你走得掉，但你走不走？</h1>
+    <p class="lede">不用登入，不用輸入提示詞。按一下，就有你的處境。<br>讀完先答一句：<b>「我＿＿，是因為＿＿。」</b></p>
+    <div class="row">
+      <button onclick="draw()">抽一個處境</button>
+    </div>
+    <div class="meta">30 個處境，同一個結構：你可以走，走得有理；<br>但對方說了一句話，令你不容易走。</div>
+  </div>
+
+  <div id="card" class="hidden">
+    <div class="kicker" id="tag"></div>
+    <p class="scene" id="scene"></p>
+    <div class="quote" id="quote"></div>
+    <p class="fill">這一刻，你會說：<br>
+      我<span class="blank"></span>，是因為<span class="blank"></span>。</p>
+    <p class="hint" id="hint"></p>
+    <div class="row">
+      <button class="ghost" onclick="draw()">換一個</button>
+      <button onclick="toggleMeta()">查看對應課文</button>
+    </div>
+    <div class="meta hidden" id="meta"></div>
+  </div>
+
+</div>
+
+<script>
+const SCENES = [
+  {
+    tag:"被冤枉",
+    scene:"課室的壁報被人弄壞了，老師問是誰做的。放學後，全班都望著阿逸，因為他是最後一個離開課室的人。你不在場，但你知道不是他。你可以走——你只是路過。",
+    quote:"阿逸低聲說：「<b>你先走吧，不用陪我一塊兒被審。</b>」",
+    map:"③「友人有疾，不忍委之」<br>── 他沒有求你留下，反而推你走。你留下，是因為不忍心，不是因為要證明什麼。",
+    hint:"你走，沒有人會怪你。那你走不走？"
+  },
+  {
+    tag:"一個秘密",
+    scene:"阿澄跟你說他家裡的事，說了一半就停下來。你知道了一件不應該知道的事。第二天，你發現有同學開始議論他。你隨時可以不管這件事。",
+    quote:"阿澄說：「<b>你不要跟別人說。我自己能處理。</b>」",
+    map:"①「吾今死矣，子可去！」<br>── 一句話裡面有兩件事：他信你，他又推你走。",
+    hint:"你守得住秘密，但守得住他嗎？"
+  },
+  {
+    tag:"答應了",
+    scene:"阿晴說他想退出校隊，但還沒跟教練說。他叫你別告訴任何人。今天教練問你：「你知不知道他為什麼常常不來？」你答不知道就沒事。",
+    quote:"阿晴說：「<b>你答應我，不要說。</b>」",
+    map:"③「友人有疾，不忍委之」<br>── 你守住承諾，可能就等於沒有幫到他。",
+    hint:"你不說，是尊重他，還是不想麻煩？"
+  },
+  {
+    tag:"全班都在笑",
+    scene:"有人在課室拿阿楠的身材開玩笑，全班都在笑。你沒有笑，但你也沒有出聲。你可以繼續做自己的事——反正你沒有份笑。",
+    quote:"阿楠轉頭跟你說：「<b>你不用幫我出聲，我已經習慣了。</b>」",
+    map:"④「我輩無義之人，而入有義之國！」<br>── 「我已經習慣了」是最不應該習慣的一句話。",
+    hint:"你沒有做壞事。那你算不算做了好事？"
+  },
+  {
+    tag:"選組員",
+    scene:"分組的時候，全班都不想跟阿晴一組。老師問：「誰願意跟他一組？」你可以不出聲，低頭看書，沒有人會知道你怎麼想。",
+    quote:"阿晴低聲說：「<b>你不用勉強，我一個人也可以。</b>」",
+    map:"③「友人有疾，不忍委之」<br>── 最難的不是說一句話，是在所有人都沒有出聲的時候出聲。",
+    hint:"他說「一個人也可以」。你信嗎？"
+  },
+  {
+    tag:"網上",
+    scene:"有人開了一個群組，專門取笑阿楠。你被拉了進去。你沒有出過一句聲，但你沒有退出。你可以當作看不到。",
+    quote:"阿楠第二天問你：「<b>你也在那個群組裡，是不是？</b>」",
+    map:"⑤「大軍至，一郡盡空，汝何男子，而敢獨止？」<br>── 所有人都走的時候，有沒有人留下？",
+    hint:"退出群組，會不會太戲劇化？"
+  },
+  {
+    tag:"借錢",
+    scene:"阿輝第三次問你借錢，前兩次都沒還。你這個月也緊，錢包裡只剩飯錢。你可以說沒有。",
+    quote:"阿輝說：「<b>下個月一定還。你不借，我明白。</b>」",
+    map:"②「遠來相視，子令吾去；敗義以求生，豈荀巨伯所行邪？」<br>── 「我明白」三個字，是最容易令人改變主意的三個字。",
+    hint:"如果他沒有最後那一句，你會借嗎？"
+  },
+  {
+    tag:"他不說",
+    scene:"阿穎最近常常遲到、不交功課、上課趴著。你隱約知道他家裡有事，但他一個字也沒說。你可以當作沒事發生。",
+    quote:"阿穎說：「<b>我沒事，你不用管我。</b>」",
+    map:"①「吾今死矣，子可去！」<br>── 「你不用管我」有時是最需要人管的一句話。但你怎麼知道是哪一種？",
+    hint:"你分得出「真的不想人管」和「不想再說下去」嗎？"
+  },
+  {
+    tag:"花名",
+    scene:"班上開始有人用一個花名喚阿珊，越喚越順口。你沒有喚，但你也沒有阻止。你可以繼續喚他的名字，當作沒事。",
+    quote:"阿珊跟你說：「<b>你不用理他們。</b>」",
+    map:"④「我輩無義之人，而入有義之國！」<br>── 你沒有喚，已經比很多人好。但夠不夠？",
+    hint:"「你不用理」是叫你別理他們，還是別理他？"
+  },
+  {
+    tag:"分組報告",
+    scene:"阿晴整個星期都沒有做過事。明天就要交，你和另一個組員做完了所有事。你可以照樣寫上他的名字，也可以跟老師說清楚。",
+    quote:"阿晴說：「<b>你寫上我的名字吧。不寫我就死定了。</b>」",
+    map:"②「敗義以求生，豈荀巨伯所行邪？」<br>── 寫上他的名字，是這次幫他，還是令下一個跟他一組的人再受一次？",
+    hint:"你原諒他一次。第二次呢？"
+  },
+  {
+    tag:"秘密被公開",
+    scene:"有人在課室大聲說出阿楠的秘密，說得很大聲，全班靜了下來。你是唯一知道這件事是真的的人。你可以低頭，也可以說一句。",
+    quote:"阿楠望著你，低聲說：「<b>你不要出聲，越說越糟。</b>」",
+    map:"⑤「大軍至，一郡盡空，汝何男子，而敢獨止？」<br>── 他叫你別出聲。但不出聲，就等於同意。",
+    hint:"說一句，你可能會變成下一個被笑的人。"
+  },
+  {
+    tag:"班長",
+    scene:"你是班長。阿俊連續三天遲到，老師叫你照實記錄。你可以寫，也可以寫「沒事」。沒有人會查。",
+    quote:"阿俊求你：「<b>你寫了我就留堂，我媽媽會殺我。</b>」",
+    map:"②「遠來相視，子令吾去；敗義以求生，豈荀巨伯所行邪？」<br>── 你不寫，是幫朋友；你寫，是盡責。兩個都有人會說你不對。",
+    hint:"如果你不是班長，你會怎麼做？"
+  },
+  {
+    tag:"值日",
+    scene:"阿晴要趕回家照顧弟弟，問你可不可以幫他做值日。但你今天要趕去補習，遲到會被媽媽罵。",
+    quote:"阿晴說：「<b>你不用幫我，我自己能處理。</b>」",
+    map:"①「吾今死矣，子可去！」<br>── 「我自己能處理」，通常是一個人最處理不來的時候說的。",
+    hint:"你幫他，你自己要付代價。那你還幫不幫？"
+  },
+  {
+    tag:"群組",
+    scene:"有人開了一個群組，專門說老師和某個同學的壞話，叫你進去。你不想進，但不進就變成「不合群」。",
+    quote:"對方說：「<b>你不進，就是不當我們是朋友。</b>」",
+    map:"②「敗義以求生，豈荀巨伯所行邪？」<br>── 為了不被排擠而進群，就是「敗義以求生」最日常的版本。",
+    hint:"你進去了但不出聲，算不算已經進了？"
+  },
+  {
+    tag:"正選位",
+    scene:"隊裡只剩下一個正選位置，你和阿樂在爭。教練問你：「阿樂是不是請了很多次假？」他真的請了。你說實話，位置就是你的。",
+    quote:"阿樂求你：「<b>你不說，沒有人知道。</b>」",
+    map:"②「敗義以求生，豈荀巨伯所行邪？」<br>── 說實話你贏，不說你也贏。那分別在哪裡？",
+    hint:"如果那個位置不是你的，你會說嗎？"
+  },
+  {
+    tag:"想放棄",
+    scene:"阿澄跟你說他想退出校際朗誦，說自己怎麼練也不行。你可以答一句「你可以的」，說完就收工，反正不關你的事。",
+    quote:"阿澄說：「<b>你不用安慰我。</b>」",
+    map:"①「吾今死矣，子可去！」<br>── 「不用安慰我」不等於「不用理我」。",
+    hint:"說「你可以的」很容易。說真話難。"
+  },
+  {
+    tag:"班費",
+    scene:"班費不見了三百塊，負責收錢的是阿輝。他說不知道為什麼少了。你可以照樣交錢，當作不關你的事。",
+    quote:"阿輝說：「<b>你不用幫我，我自己賠。</b>」",
+    map:"③「友人有疾，不忍委之」<br>── 他沒有叫你幫，但你知道他一個人賠不起。",
+    hint:"你幫他，就是幫他不用面對後果。"
+  },
+  {
+    tag:"背後說",
+    scene:"你聽到阿樂在後面說你壞話，說得很難聽。第二天，他照樣叫你幫他搬東西。你可以當作沒聽過，也可以問他。",
+    quote:"阿樂說：「<b>你不幫我，我明白。</b>」",
+    map:"②「遠來相視，子令吾去；敗義以求生，豈荀巨伯所行邪？」<br>── 你可以選擇不原諒他。那不原諒，是不是就等於不幫？",
+    hint:"你生他的氣，跟你幫不幫他，是兩件事嗎？"
+  },
+  {
+    tag:"偷偷參加",
+    scene:"阿晴偷偷報了一個校外比賽，沒有跟老師說。他叫你不要說，因為說了老師會不准。你覺得老師其實會支持。",
+    quote:"阿晴說：「<b>你說了，我就不能去了。</b>」",
+    map:"③「友人有疾，不忍委之」<br>── 你覺得為他好的事，他未必想要。",
+    hint:"「為他好」和「他想要」，什麼時候會撞？"
+  },
+  {
+    tag:"作品",
+    scene:"阿俊交了一份作品去比賽，你認得出其中一段是網上抄的。老師稱讚他，全班拍手。你可以不出聲。",
+    quote:"阿俊散場時跟你說：「<b>你知道就好，不要說。</b>」",
+    map:"④「我輩無義之人，而入有義之國！」<br>── 你沒有做錯任何事。你只是知道。",
+    hint:"如果得獎的是你，你會希望有人出聲嗎？"
+  },
+  {
+    tag:"班務手冊",
+    scene:"阿達是你隔壁位的好朋友。他不小心弄丟了班務手冊，裡面有全班的資料。老師五分鐘後就回來，他現在手都在抖。",
+    quote:"阿達低聲說：「<b>你先上去吧，不要陪我一塊兒死。</b>」",
+    map:"③「友人有疾，不忍委之」<br>── 他不想你被連累，所以推你走。",
+    hint:"你留下，可能一起被罰。那你留不留？"
+  },
+  {
+    tag:"陸運會道具",
+    scene:"陸運會的大型道具，是你們班做了一個星期的。阿偉搬的時候摔爛了一角。全班還沒回來，他想用膠紙貼住遮一遮。",
+    quote:"阿偉說：「<b>你不用管我，快去吃飯。</b>」",
+    map:"②「敗義以求生，豈荀巨伯所行邪？」<br>── 遮得住，就沒事；遮不住，全組一起死。",
+    hint:"你幫他遮，還是叫他認？"
+  },
+  {
+    tag:"群組圍攻",
+    scene:"阿輝把朋友的秘密說了出去，現在整個群組圍攻他。他跟你認識三年了。你可以留在群組看，也可以收起電話。",
+    quote:"阿輝說：「<b>你先回去吧，不用看我這麼狼狽。</b>」",
+    map:"②「遠來相視，子令吾去；敗義以求生，豈荀巨伯所行邪？」<br>── 他做錯了。那義是不是就此結束？",
+    hint:"他做錯事。那你還幫不幫？"
+  },
+  {
+    tag:"害群之馬",
+    scene:"分組報告因為阿聰沒有存好檔案，全組低分。隊友發完脾氣走了，只剩下他一個在電腦室紅著眼。你是組員之一。",
+    quote:"阿聰說：「<b>你走吧，不用理我這個害群之馬。</b>」",
+    map:"③「友人有疾，不忍委之」<br>── 你生他的氣，跟你留不留，是兩件事。",
+    hint:"你生他的氣。那你還留不留？"
+  },
+  {
+    tag:"摔壞相機",
+    scene:"阿樂借了學校的相機，摔壞了鏡頭。鏡頭要賠錢，他賠不起，又不敢去校務處說。你可以裝作不知道。",
+    quote:"阿樂說：「<b>你快點走，免得他們以為你也有份。</b>」",
+    map:"③「友人有疾，不忍委之」<br>── 你留下，可能也要解釋。",
+    hint:"你留下，可能一起被問。那你走不走？"
+  },
+  {
+    tag:"沒有人理他",
+    scene:"阿亮上個月跟班上最受歡迎的同學吵過一次架。之後全班都沒什麼人理他。今天分組又沒有人肯跟他一組，他一個人坐在角落。你跟他不算熟，但你知道那次是對方先惹他。",
+    quote:"阿亮說：「<b>你不用陪我坐，我一個人可以。</b>」",
+    map:"④「我輩無義之人，而入有義之國！」<br>── 全班都沒有出聲。你要不要做那個過去坐的人？",
+    hint:"你過去坐，你可能也會被無視。"
+  },
+  {
+    tag:"替他收藏",
+    scene:"阿俊偷偷帶了一隻倉鼠回校，養在他的書包裡。你幫他掩飾過兩次。現在有人告密，班主任說要逐個搜書包。",
+    quote:"阿俊低聲說：「<b>你不要說，他會沒收的。</b>」",
+    map:"②「敗義以求生，豈荀巨伯所行邪？」<br>── 你交出他，他被罰，你沒事；你不交，你要一起說謊。",
+    hint:"你幫他收藏，就等於你也有份。那你收不收？"
+  },
+  {
+    tag:"說謊",
+    scene:"阿輝叫你幫他說一句「他昨晚在我家」，其實他去了玩通宵。他媽媽現在打給你，等你回答。",
+    quote:"阿輝求你：「<b>你幫我說一次，可以嗎？</b>」",
+    map:"②「遠來相視，子令吾去；敗義以求生，豈荀巨伯所行邪？」<br>── 你說，是幫他過今晚；你不說，是幫他不用再說第二次。",
+    hint:"幫他一次，可能就要幫他第二次。"
+  },
+  {
+    tag:"他為你出頭",
+    scene:"有人在群組笑你，阿晴立刻出聲幫你，結果自己被人笑到收聲。你看著整個過程，你可以不出聲。",
+    quote:"阿晴私訊你：「<b>你不用理，我已經習慣被人笑。</b>」",
+    map:"⑤「大軍至，一郡盡空，汝何男子，而敢獨止？」<br>── 他走了出去，你還在裡面。",
+    hint:"他為你擋了一刀。你要不要走出去？"
+  },
+  {
+    tag:"答應陪他",
+    scene:"你答應放學陪阿樂去交一份表，他自己一個不敢去。但你今天要趕回家拿東西，再去補習，時間撞得剛好。",
+    quote:"阿樂說：「<b>你不用來，我一個人去也可以。</b>」",
+    map:"③「友人有疾，不忍委之」<br>── 失約不會有人怪你。但他一個人去，你放心嗎？",
+    hint:"你失約，他不會怪你。那就沒問題？"
+  }
+];
+
+let current = -1;
+const el = id => document.getElementById(id);
+
+function render(i){
+  current = i;
+  const s = SCENES[i];
+  el("tag").textContent = `處境 ${String(i+1).padStart(2,"0")}／${SCENES.length}・${s.tag}`;
+  el("scene").textContent = s.scene;
+  el("quote").innerHTML = s.quote;
+  el("hint").textContent = s.hint;
+  el("meta").innerHTML = `<b>對應課文</b><br>${s.map}`;
+  el("meta").classList.add("hidden");
+  el("home").classList.add("hidden");
+  const card = el("card");
+  card.classList.remove("hidden");
+  card.querySelectorAll(".scene,.quote,.fill").forEach(n=>{
+    n.style.animation="none"; void n.offsetWidth; n.style.animation="";
+  });
+  window.scrollTo({top:0,behavior:"instant"});
+}
+
+function draw(){
+  let i;
+  do { i = Math.floor(Math.random()*SCENES.length); } while (SCENES.length>1 && i===current);
+  render(i);
+}
+
+function toggleMeta(){
+  el("meta").classList.toggle("hidden");
+}
+
+// 老師版：加 ?id=3 固定在第 3 個處境
+const fixed = new URLSearchParams(location.search).get("id");
+if (fixed) {
+  const i = Math.max(0, Math.min(SCENES.length-1, parseInt(fixed,10)-1));
+  render(i);
+}
+</script>
+</body>
+</html>
