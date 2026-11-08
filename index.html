@@ -53,7 +53,7 @@
     <div class="row">
       <button onclick="draw()">抽一個處境</button>
     </div>
-    <div class="meta">5 個處境，同一個結構：你可以走，走得有理；<br>但對方說了一句話，令你不容易走。<br><span style="opacity:.55;font-size:12px">v19 · 2026-11-08</span></div>
+    <div class="meta">5 個處境，同一個結構：你可以走，走得有理；<br>但對方說了一句話，令你不容易走。<br><span style="opacity:.55;font-size:12px">v20 · 2026-11-08</span></div>
   </div>
 
   <div id="card" class="hidden">
@@ -155,6 +155,7 @@ function nextAsk(){
     p.className = "ask";
     p.textContent = list[askIdx];
     el("asks").appendChild(p);
+    p.scrollIntoView({block:"center", behavior:"smooth"});
     askIdx++;
   }
   if (askIdx >= list.length){
