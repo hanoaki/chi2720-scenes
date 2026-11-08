@@ -36,6 +36,9 @@
     font-size:13.5px;line-height:1.9;color:var(--sub)}
   .meta b{color:var(--accent);font-weight:600}
   .hidden{display:none}
+  .ask{font-size:16px;line-height:1.9;color:var(--ink);margin:12px 0 0;padding-left:14px;
+    border-left:2px solid var(--line);animation:rise .4s ease both}
+  .fillnote{font-size:13px;color:var(--sub)}
   @keyframes rise{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
   @media (prefers-reduced-motion:reduce){*{animation:none!important}}
 </style>
@@ -46,11 +49,11 @@
   <div id="home">
     <div class="kicker">荀巨伯遠看友人疾・自我反省</div>
     <h1>抽一個處境：<br>你走得掉，但你走不走？</h1>
-    <p class="lede">不用登入，不用輸入提示詞。按一下，就有你的處境。<br>讀完先答一句：<b>「我＿＿，是因為＿＿。」</b></p>
+    <p class="lede">這裡沒有正確答案，也沒有人會知道你按了什麼。<br>按一下，抽一個處境；讀完，按「再問我一句」。</p>
     <div class="row">
       <button onclick="draw()">抽一個處境</button>
     </div>
-    <div class="meta">5 個處境，同一個結構：你可以走，走得有理；<br>但對方說了一句話，令你不容易走。<br><span style="opacity:.55;font-size:12px">v18 · 2026-11-08</span></div>
+    <div class="meta">5 個處境，同一個結構：你可以走，走得有理；<br>但對方說了一句話，令你不容易走。<br><span style="opacity:.55;font-size:12px">v19 · 2026-11-08</span></div>
   </div>
 
   <div id="card" class="hidden">
@@ -58,11 +61,15 @@
     <p class="scene" id="scene"></p>
     <div class="quote" id="quote"></div>
     <p class="fill">這一刻，你會說：<br>
-      我<span class="blank"></span>，是因為<span class="blank"></span>。</p>
-    <p class="hint" id="hint"></p>
-    <div class="row">
+      我<span class="blank"></span>，是因為<span class="blank"></span>。<br>
+      <span class="fillnote">（寫在便條紙上，不必在這裡寫）</span></p>
+    <div id="asks"></div>
+    <div class="row" id="row1">
+      <button id="askBtn" onclick="nextAsk()">再問我一句</button>
+    </div>
+    <div class="row hidden" id="row2">
       <button class="ghost" onclick="draw()">換一個</button>
-      <button onclick="toggleMeta()">查看對應課文</button>
+      <button class="ghost" onclick="toggleMeta()" id="metaBtn">對應課文</button>
     </div>
     <div class="meta hidden" id="meta"></div>
   </div>
@@ -117,9 +124,14 @@ function render(i){
   el("tag").textContent = `處境 ${String(i+1).padStart(2,"0")}／${SCENES.length}・${s.tag}`;
   el("scene").textContent = s.scene;
   el("quote").innerHTML = s.quote;
-  el("hint").textContent = s.hint;
   el("meta").innerHTML = `<b>對應課文</b><br>${s.map}`;
   el("meta").classList.add("hidden");
+  el("asks").innerHTML = "";
+  askIdx = 0;
+  el("askBtn").classList.remove("hidden");
+  el("askBtn").textContent = "再問我一句";
+  el("row1").classList.remove("hidden");
+  el("row2").classList.add("hidden");
   el("home").classList.add("hidden");
   const card = el("card");
   card.classList.remove("hidden");
@@ -127,6 +139,28 @@ function render(i){
     n.style.animation="none"; void n.offsetWidth; n.style.animation="";
   });
   window.scrollTo({top:0,behavior:"instant"});
+}
+
+const ASKS_TAIL = [
+  "如果沒有人知道你走了，你還會走嗎？",
+  "你留下來，是因為不捨得，還是不放心？"
+];
+let askIdx = 0;
+
+function nextAsk(){
+  const s = SCENES[current];
+  const list = [s.hint].concat(ASKS_TAIL);
+  if (askIdx < list.length){
+    const p = document.createElement("p");
+    p.className = "ask";
+    p.textContent = list[askIdx];
+    el("asks").appendChild(p);
+    askIdx++;
+  }
+  if (askIdx >= list.length){
+    el("row1").classList.add("hidden");
+    el("row2").classList.remove("hidden");
+  }
 }
 
 function draw(){
@@ -141,6 +175,7 @@ function toggleMeta(){
 
 // 老師版：加 ?id=3 固定在第 3 個處境
 const fixed = new URLSearchParams(location.search).get("id");
+if (!fixed) { const mb = el("metaBtn"); if (mb) mb.classList.add("hidden"); }
 if (fixed) {
   const i = Math.max(0, Math.min(SCENES.length-1, parseInt(fixed,10)-1));
   render(i);
